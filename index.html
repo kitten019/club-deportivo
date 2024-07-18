@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous" />
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+    integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+    integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+  <title>Club deportivo</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="m-2">Deportes</h1>
+    <div action="/agregar" class="border rounded p-4">
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Nombre</label>
+
+        <div class="col-sm-10">
+          <input id="nombre" type="text" class="form-control" name="nombre" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Precio</label>
+
+        <div class="col-sm-10">
+          <input id="precio" type="text" class="form-control" precio="precio" />
+        </div>
+      </div>
+
+      <button class="btn btn-info" onclick="agregar()">Agregar</button>
+    </div>
+  </div>
+  <h5 class="text-center my-4">Tabla de deportes registrados</h5>
+  <table class="table w-25 m-auto border">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Precio</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody id="cuerpo"></tbody>
+  </table>
+
+  <script>
+    //Función que se ejecuta cuando el documento HTML se carga completo
+    $(document).ready(function () {
+      //lama a la función getData() cuando está cargado
+      getData()
+    })
+
+    //Función que obtiene los datos de deportes del servidor y los muestra en la tabla
+    function getData() {
+      //Limpia el contenido del cuerpo de la tabla antes de mostrar nuevos datos
+      $('#cuerpo').html('')
+      //Realiza una solicitud GET al servidor para obtener los datos
+      axios.get('/deportes').then((data) => {
+        //los datos obtenido los almacena en la variable "deportes"
+        let deportes = data.data.deportes
+        //Itera sobre cada deporte y lo agrega como una fila en el cuerpo de la tabla
+        deportes.forEach((d, i) => {
+          $('#cuerpo').append(`
+          <tr>
+            <th scope="row" >${i + 1}</th>
+            <td>${d.nombre}</td>
+            <td>${d.precio}</td>
+            <td  >
+              <div class="d-flex m-2">
+              <button class="btn btn-warning mx-1" onclick='preEdit("${d.nombre}","${d.precio
+            }")' data-toggle="modal" data-target="#exampleModal">Editar</button>
+           
+              <button class="btn btn-danger" onclick='eliminar("${d.nombre}")'>Eliminar</button>
+          </div>
+              </td>
+          </tr>
+          `)
+        })
+      })
+    }
+    // Función que establece los valores de nombre y precio en el modal de edición
+    function preEdit(nombre, precio) {
+      // Obtiene los valores de nombre y precio desde los campos de entrada
+      $('#nombreModal').val(nombre)
+      $('#precioModal').val(precio)
+    }
+
+    //Esta función agrega un nuevo deporte al servidor
+    function agregar() {
+      let nombre = $('#nombre').val()
+      let precio = $('#precio').val()
+      axios.get(`/agregar?nombre=${nombre}&precio=${precio}`).then((data) => {
+        alert(data.data)// Se muestra una alerta con la respuesta del servidor
+        getData() //llama a getData para actualizar los datos de la tabla
+      })
+      // Se oculta el modal después de agregar el deporte
+      $('#exampleModal').modal('hide')
+    }
+
+    // Esta función edita el precio de un deporte existente en el servidor
+    function editar() {
+      // Obtiene los valores de nombre y precio desde los campos de entrada en el modal
+      let nombre = $('#nombreModal').val()
+      let precio = $('#precioModal').val()
+      // 
+      axios.get(`/editar?nombre=${nombre}&precio=${precio}`).then((data) => {
+        alert(data.data)  // Muestra una alerta con la respuesta del servidor
+        getData() //llama a getDAta para actualizar los datos de la tabla
+      })
+      $('#exampleModal').modal('hide')
+    }
+
+    // Esta función elimina un deporte existente en el servidor
+    function eliminar(nombre) {
+      //cambiar de query para que sea con params, iteración con parámetro nombre que recibe get en index.js
+      axios.get(`/eliminar/${nombre}`).then((data) => {
+        alert(data.data)  // Muestra una alerta con la respuesta del servidor
+        getData()//llama a getDAta para actualizar los datos de la tabla
+      })
+      $('#exampleModal').modal('hide')
+    }
+  </script>
+
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="rounded p-4">
+          </form>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Nombre</label>
+
+            <div class="col-sm-10">
+              <input id="nombreModal" disabled type="text" class="form-control" name="nombre" />
+            </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Precio</label>
+
+            <div class="col-sm-10">
+              <input id="precioModal" type="text" class="form-control" precio="precio" />
+            </div>
+          </div>
+
+          <button class="btn btn-warning" onclick="editar()">Editar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
